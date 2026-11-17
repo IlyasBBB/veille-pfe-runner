@@ -71,6 +71,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SHEETS_URL: ${{ secrets.SHEETS_URL }}       # offers already in the sheet are not sent again
+          SHEETS_TOKEN: ${{ secrets.SHEETS_TOKEN }}
         run: |
           status=0
           for cfg in $CONFIGS; do
