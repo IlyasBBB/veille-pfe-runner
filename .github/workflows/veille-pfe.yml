@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run | auto (skips if a pass ran recently) | test-email | check-sources | check-cv | check-ia | dry-run | status | renvoi | essai-contacts | feuille"
+        description: "run | auto (skips if a pass ran recently) | test-email | check-sources | check-cv | check-ia | dry-run | status | renvoi | essai-contacts | feuille | purge | refaire"
         type: choice
-        options: [run, auto, test-email, check-sources, check-cv, check-ia, dry-run, status, renvoi, essai-contacts, feuille]
+        options: [run, auto, test-email, check-sources, check-cv, check-ia, dry-run, status, renvoi, essai-contacts, feuille, purge, refaire]
         default: run
       campagne:
         description: "toutes | maroc | france | hongkong"
@@ -177,7 +177,7 @@ jobs:
           ls -1 logs/*.log 2>/dev/null | sort -r | tail -n +61 | xargs -r rm -f   # the 60 latest logs (by name)
           git add -A -f logs
           case "$MODE" in
-            run|auto|renvoi|essai-contacts|feuille) git add -A data data_france data_hongkong ;;
+            run|auto|renvoi|essai-contacts|feuille|purge|refaire) git add -A data data_france data_hongkong ;;
             check-cv) if [ -d cv_apercu ]; then git add -A -f cv_apercu; fi ;;
           esac
           if git diff --cached --quiet; then echo "Nothing new to save."; exit 0; fi
