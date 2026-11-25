@@ -73,6 +73,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SHEETS_URL: ${{ secrets.SHEETS_URL }}       # offers already in the sheet are not sent again
           SHEETS_TOKEN: ${{ secrets.SHEETS_TOKEN }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}   # LinkedIn posts source (web search)
         run: |
           status=0
           for cfg in $CONFIGS; do
