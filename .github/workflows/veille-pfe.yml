@@ -1,4 +1,5 @@
 name: Veille PFE
+run-name: "Veille PFE ${{ inputs.mode || 'auto' }} ${{ inputs.campagne || '' }} ${{ inputs.jeton || '' }}"
 
 # Runs the passes of a private watch: the code, the configuration, the CV content and the memory live in the
 # private repository IlyasBBB/veille-pfe, checked out with the secret DATA_REPO_TOKEN. Minutes are free and
@@ -11,15 +12,27 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run | auto (skips if a pass ran recently) | test-email | check-sources | check-cv | check-ia | dry-run | status | renvoi | essai-contacts | feuille | purge | refaire"
+        description: "run | auto (skips if a pass ran recently) | test-email | check-sources | check-cv | check-ia | dry-run | status | renvoi | essai-contacts | feuille | purge | refaire | reecriture"
         type: choice
-        options: [run, auto, test-email, check-sources, check-cv, check-ia, dry-run, status, renvoi, essai-contacts, feuille, purge, refaire]
+        options: [run, auto, test-email, check-sources, check-cv, check-ia, dry-run, status, renvoi, essai-contacts, feuille, purge, refaire, reecriture]
         default: run
       campagne:
         description: "toutes | maroc | france | hongkong"
         type: choice
         options: [toutes, maroc, france, hongkong]
         default: toutes
+      liens:
+        description: "reecriture : liens des offres à réécrire, séparés par des espaces (vide : les meilleures de la file)"
+        type: string
+        default: ""
+      limite:
+        description: "reecriture : nombre d'offres au plus par veille"
+        type: string
+        default: "10"
+      jeton:
+        description: "identifiant donné par l'application de suivi pour retrouver ce passage"
+        type: string
+        default: ""
 
 permissions:
   contents: write   # only for the monthly keep-alive commit of this repository (the memory goes to the private one)
@@ -31,6 +44,8 @@ concurrency:
 env:
   MODE: ${{ github.event_name == 'schedule' && 'auto' || inputs.mode || 'run' }}
   CAMPAGNE: ${{ inputs.campagne || 'toutes' }}
+  PFE_LIENS: ${{ inputs.liens || '' }}
+  LIMITE: ${{ inputs.limite || '10' }}
 
 jobs:
   watch:
@@ -165,7 +180,7 @@ jobs:
             if [ "$MODE" = "run" ] || [ "$MODE" = "auto" ]; then
               python run.py --config "$cfg" --mode "$MODE" --stage notify >> "$LOG" 2>&1 || status=1
             else
-              python run.py --config "$cfg" --mode "$MODE" >> "$LOG" 2>&1 || status=1
+              python run.py --config "$cfg" --mode "$MODE" --limite "$LIMITE" >> "$LOG" 2>&1 || status=1
             fi
           done
           echo "Done (details in the private repository, $LOG)."
@@ -179,7 +194,7 @@ jobs:
           ls -1 logs/*.log 2>/dev/null | sort -r | tail -n +61 | xargs -r rm -f   # the 60 latest logs (by name)
           git add -A -f logs
           case "$MODE" in
-            run|auto|renvoi|essai-contacts|feuille|purge|refaire) git add -A data data_france data_hongkong ;;
+            run|auto|renvoi|essai-contacts|feuille|purge|refaire|reecriture) git add -A data data_france data_hongkong ;;
             check-cv) if [ -d cv_apercu ]; then git add -A -f cv_apercu; fi ;;
           esac
           if git diff --cached --quiet; then echo "Nothing new to save."; exit 0; fi
